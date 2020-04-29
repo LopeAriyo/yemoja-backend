@@ -8,14 +8,14 @@ router.post("/", cyclesController.createCycle);
 
 //Read
 router.get("/user/:uid", cyclesController.getUserCycles);
-router.get("/user/:uid", cyclesController.getUserCurrentCycle);
-//TODOs
-// + Previous Cycle(s)??
+router.get("/user/:uid/currentcycle", cyclesController.getUserCurrentCycle);
 
 //Update
-//TODOs
-//+ Update to inactive cycle
-//+
+// router.patch("/:cid", cyclesController.updateCycle);
+router.patch(
+    "/user/:uid/currentcycle",
+    cyclesController.updateUserCurrentCycle
+);
 
 //Delete
 router.delete("/:cid", cyclesController.destroyCycle);

@@ -4,23 +4,23 @@ const HttpError = require("../models/http-error");
 let DUMMY_CYCLES = [
     {
         id: 4,
-        current_cycle: true,
-        start_date: "03/31/2020",
+        is_cycle_active: true,
+        start_date: "04/29/2020",
         end_date: null,
         period_length: 5,
         user_id: 1,
     },
     {
         id: 3,
-        current_cycle: true,
+        is_cycle_active: false,
         start_date: "03/31/2020",
         end_date: "04/28/2020",
         period_length: 3,
-        user_id: 2,
+        user_id: 1,
     },
     {
         id: 2,
-        current_cycle: false,
+        is_cycle_active: false,
         start_date: "02/29/2020",
         end_date: "03/30/2020",
         period_length: 4,
@@ -28,7 +28,7 @@ let DUMMY_CYCLES = [
     },
     {
         id: 1,
-        current_cycle: false,
+        is_cycle_active: false,
         start_date: "01/31/2020",
         end_date: "02/28/2020",
         period_length: 4,
@@ -41,7 +41,7 @@ const createCycle = (req, res, next) => {
 
     const newCycle = {
         id: uuid(),
-        current_cycle: true,
+        is_cycle_active: true,
         start_date,
         end_date,
         period_length,
@@ -71,10 +71,10 @@ const getUserCycles = (req, res, next) => {
 
 const getUserCurrentCycle = (req, res, next) => {
     const userID = parseInt(req.params.uid);
-    const current_cycle = DUMMY_CYCLES.find(cycle => {
-        return cycle.user_id === userID && cycle.current_cycle === true;
+    const currentCycle = DUMMY_CYCLES.find(cycle => {
+        return cycle.user_id === userID && cycle.is_cycle_active === true;
     });
-    if (!current_cycle) {
+    if (!currentCycle) {
         return next(
             new HttpError(
                 "Could not find the current cycle for the provided user id.",
@@ -82,7 +82,86 @@ const getUserCurrentCycle = (req, res, next) => {
             )
         );
     }
-    res.json({ current_cycle });
+    res.json({ cycle: currentCycle });
+};
+
+const updateCycle = (req, res, next) => {
+    const cycleID = parseInt(req.params.cid);
+    const { is_cycle_active, start_date, end_date, period_length } = req.body;
+
+    const cycleToUpdate = {
+        ...DUMMY_CYCLES.find(cycle => {
+            return cycle.id === cycleID;
+        }),
+    };
+
+    const cycleIndex = DUMMY_CYCLES.findIndex(cycle => cycle.id === cycleID);
+
+    //may need if statements here as not everything gets updated at the same time
+    if (is_cycle_active) {
+        cycleToUpdate.is_cycle_active = is_cycle_active;
+    }
+    if (start_date) {
+        cycleToUpdate.start_date = start_date;
+    }
+
+    if (end_date) {
+        cycleToUpdate.end_date = end_date;
+    }
+
+    if (period_length) {
+        cycleToUpdate.period_length = period_length;
+    }
+
+    DUMMY_CYCLES[cycleIndex] = cycleToUpdate;
+
+    if (!cycleToUpdate) {
+        return next(
+            new HttpError("Could not update cycle with provided id.", 404)
+        );
+    }
+
+    res.status(200).json({ cycle: cycleToUpdate });
+};
+
+const updateUserCurrentCycle = (req, res, next) => {
+    const userID = parseInt(req.params.uid);
+    const { is_cycle_active, start_date, end_date, period_length } = req.body;
+
+    const cycleToUpdate = {
+        ...DUMMY_CYCLES.find(cycle => {
+            return cycle.user_id === userID && cycle.is_cycle_active === true;
+        }),
+    };
+
+    if (!cycleToUpdate) {
+        return next(
+            new HttpError("Could not update cycle with provided id.", 404)
+        );
+    }
+
+    const cycleIndex = DUMMY_CYCLES.findIndex(
+        cycle => cycle.id === cycleToUpdate.id
+    );
+
+    if (is_cycle_active) {
+        cycleToUpdate.is_cycle_active = is_cycle_active;
+    }
+    if (start_date) {
+        cycleToUpdate.start_date = start_date;
+    }
+
+    if (end_date) {
+        cycleToUpdate.end_date = end_date;
+    }
+
+    if (period_length) {
+        cycleToUpdate.period_length = period_length;
+    }
+
+    DUMMY_CYCLES[cycleIndex] = cycleToUpdate;
+
+    res.status(200).json({ cycle: cycleToUpdate });
 };
 
 const destroyCycle = (req, res, next) => {
@@ -95,6 +174,8 @@ const destroyCycle = (req, res, next) => {
 exports.createCycle = createCycle;
 exports.getUserCycles = getUserCycles;
 exports.getUserCurrentCycle = getUserCurrentCycle;
+// exports.updateCycle = updateCycle;
+exports.updateUserCurrentCycle = updateUserCurrentCycle;
 // exports.getUserCycleByID = getUserCycleByID;
 // exports.getUserPreviousCycle?
 // exports.updateCurrentCyclePeriodLength = updateCurrentCyclePeriodLength;
