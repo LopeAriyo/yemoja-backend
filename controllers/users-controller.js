@@ -1,7 +1,7 @@
 const uuid = require("uuid/v4");
 const HttpError = require("../models/http-error");
 
-const DUMMY_USERS = [
+let DUMMY_USERS = [
     {
         id: 1,
         first_name: "Lope",
@@ -21,7 +21,13 @@ const DUMMY_USERS = [
 const signUp = (req, res, next) => {
     const { first_name, last_name, email, password } = req.body;
 
-    const newUser = { id: uuid(), first_name, last_name, email, password };
+    const newUser = {
+        id: uuid(),
+        first_name,
+        last_name,
+        email,
+        password,
+    };
 
     DUMMY_USERS.push(newUser);
 
@@ -50,6 +56,14 @@ const getUser = (req, res, next) => {
     res.json({ user });
 };
 
+const destroyUser = (req, res, next) => {
+    const userID = parseInt(req.params.uid);
+    DUMMY_USERS = DUMMY_USERS.filter(user => user.id !== userID);
+    res.status(200).json({ message: "User deleted" });
+};
+
 exports.signUp = signUp;
 exports.signIn = signIn;
 exports.getUser = getUser;
+// exports.updateUser = updateUser;
+exports.destroyUser = destroyUser;
