@@ -1,4 +1,5 @@
 const uuid = require("uuid/v4");
+const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 
 let DUMMY_USERS = [
@@ -23,6 +24,12 @@ let DUMMY_USERS = [
 ];
 
 const signUp = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        throw new HttpError("Invalid inputs", 422);
+    }
+
     const { first_name, last_name, email, password } = req.body;
 
     const newUser = {
@@ -41,6 +48,11 @@ const signUp = (req, res, next) => {
 };
 
 const signIn = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        throw new HttpError("Invalid inputs", 422);
+    }
     const { email, password } = req.body;
 
     const validUser = DUMMY_USERS.find(user => user.email === email);
@@ -63,6 +75,11 @@ const getUser = (req, res, next) => {
 };
 
 const updateUser = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        throw new HttpError("Invalid inputs", 422);
+    }
     const userID = parseInt(req.params.uid);
     const {
         first_name,
@@ -110,6 +127,10 @@ const updateUser = (req, res, next) => {
 
 const destroyUser = (req, res, next) => {
     const userID = parseInt(req.params.uid);
+
+    if (DUMMY_USERS.find(user => user.id === userID)) {
+        throw new HttpError("Could not find a cycle with ID", 404);
+    }
     DUMMY_USERS = DUMMY_USERS.filter(user => user.id !== userID);
     res.status(200).json({ message: "User deleted" });
 };

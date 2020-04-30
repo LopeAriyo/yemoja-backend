@@ -1,4 +1,6 @@
 const uuid = require("uuid/v4");
+const { validationResult } = require("express-validator");
+
 const HttpError = require("../models/http-error");
 
 let DUMMY_CYCLES = [
@@ -37,6 +39,11 @@ let DUMMY_CYCLES = [
 ];
 
 const createCycle = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        throw new HttpError("Invalid inputs", 422);
+    }
     const { start_date, end_date, period_length, user_id } = req.body;
 
     const newCycle = {
@@ -86,6 +93,12 @@ const getUserCurrentCycle = (req, res, next) => {
 };
 
 const updateCycle = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        throw new HttpError("Invalid inputs", 422);
+    }
+
     const cycleID = parseInt(req.params.cid);
     const { is_cycle_active, start_date, end_date, period_length } = req.body;
 
@@ -125,6 +138,12 @@ const updateCycle = (req, res, next) => {
 };
 
 const updateUserCurrentCycle = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        throw new HttpError("Invalid inputs", 422);
+    }
+
     const userID = parseInt(req.params.uid);
     const { is_cycle_active, start_date, end_date, period_length } = req.body;
 
@@ -166,6 +185,10 @@ const updateUserCurrentCycle = (req, res, next) => {
 
 const destroyCycle = (req, res, next) => {
     const cycleID = parseInt(req.params.cid);
+
+    if (DUMMY_CYCLES.find(cycle => cycle.id === cycleID)) {
+        throw new HttpError("Could not find a cycle with ID", 404);
+    }
     DUMMY_CYCLES = DUMMY_CYCLES.filter(cycle => cycle.id !== cycleID);
     res.status(200).json({ message: "Cycle deleted" });
 };
