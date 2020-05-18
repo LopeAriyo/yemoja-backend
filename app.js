@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
 //Models
 const HttpError = require("./models/http-error");
@@ -28,4 +29,9 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message || "An unknown error occurred!" });
 });
 
-app.listen(5000);
+mongoose
+    .connect()
+    .then(() => {
+        app.listen(5000);
+    })
+    .catch();
