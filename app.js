@@ -30,8 +30,12 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-    .connect()
+    .connect(
+        "mongodb+srv://lope:1nPTxhYjPPgJVZep@cluster0-s7rff.mongodb.net/test?retryWrites=true&w=majority"
+    )
     .then(() => {
         app.listen(5000);
     })
-    .catch();
+    .catch(err => {
+        console.log(err);
+    });
