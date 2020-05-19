@@ -1,9 +1,10 @@
 const uuid = require("uuid/v4");
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 
 const HttpError = require("../models/http-error");
-
 const Cycle = require("../models/cycle");
+const User = require("../models/user");
 
 let DUMMY_CYCLES = [
     {
@@ -55,8 +56,33 @@ const createCycle = async (req, res, next) => {
         user_id,
     });
 
+    let user;
+
     try {
-        await newCycle.save();
+        user = await User.findById(user_id);
+    } catch (err) {
+        const error = new HttpError(
+            "Creating cycle failed, please try again.",
+            500
+        );
+        return next(error);
+    }
+
+    if (!user) {
+        const error = new HttpError(
+            "Could not find user with provided ID.",
+            404
+        );
+        return next(error);
+    }
+
+    try {
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+        await newCycle.save({ session: sess });
+        user.cycles.push(newCycle);
+        await user.save({ session: sess });
+        await sess.commitTransaction();
     } catch (err) {
         const error = new HttpError(
             "Creating cycle failed, please try again.",
