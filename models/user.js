@@ -10,7 +10,7 @@ const userSchema = new Schema({
     password: { type: String, required: true, minLength: 6 },
     estimated_cycle_length: { type: Number, required: true },
     estimated_period_length: { type: Number, required: true },
-    cycles: { type: String, required: true },
+    cycles: [{ type: mongoose.Types.ObjectId, required: true, ref: "Cycle" }],
 });
 
 userSchema.plugin(uniqueValidator);

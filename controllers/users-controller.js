@@ -28,7 +28,7 @@ const signUp = async (req, res, next) => {
         return next(new HttpError("Invalid inputs", 422));
     }
 
-    const { first_name, last_name, email, password, cycles } = req.body;
+    const { first_name, last_name, email, password } = req.body;
 
     let existingUser;
     try {
@@ -53,7 +53,7 @@ const signUp = async (req, res, next) => {
         password,
         estimated_cycle_length: 30,
         estimated_period_length: 5,
-        cycles,
+        cycles: [],
     });
 
     try {

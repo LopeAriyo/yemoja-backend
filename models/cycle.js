@@ -6,7 +6,7 @@ const cycleSchema = new Schema({
     start_date: { type: String, required: true },
     cycle_length: { type: Number, required: true },
     period_length: { type: Number, required: true },
-    user_id: { type: String, required: true },
+    user_id: { type: mongoose.Types.ObjectId, required: true, ref: "User" },
 });
 
 module.exports = mongoose.model("Cycle", cycleSchema);
