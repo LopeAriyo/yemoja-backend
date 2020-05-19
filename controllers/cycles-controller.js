@@ -3,6 +3,8 @@ const { validationResult } = require("express-validator");
 
 const HttpError = require("../models/http-error");
 
+const Cycle = require("../models/cycle");
+
 let DUMMY_CYCLES = [
     {
         id: 4,
@@ -38,33 +40,74 @@ let DUMMY_CYCLES = [
     },
 ];
 
-const createCycle = (req, res, next) => {
+const createCycle = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log(errors);
-        throw new HttpError("Invalid inputs", 422);
+        return next(new HttpError("Invalid inputs", 422));
     }
-    const { start_date, end_date, period_length, user_id } = req.body;
+    const { is_cycle_active, start_date, user_id } = req.body;
 
-    const newCycle = {
-        id: uuid(),
-        is_cycle_active: true,
+    const newCycle = new Cycle({
+        is_cycle_active,
         start_date,
-        end_date,
-        period_length,
+        cycle_length: 1,
+        period_length: 1,
         user_id,
-    };
+    });
 
-    DUMMY_CYCLES.push(newCycle);
+    try {
+        await newCycle.save();
+    } catch (err) {
+        const error = new HttpError(
+            "Creating cycle failed, please try again.",
+            500
+        );
+        return next(error);
+    }
 
     res.status(201).json({ cycle: newCycle });
 };
 
-const getUserCycles = (req, res, next) => {
-    const userID = parseInt(req.params.uid);
-    const cycles = DUMMY_CYCLES.filter(cycle => {
-        return cycle.user_id === userID;
+const getCycleByID = async (req, res, next) => {
+    const cycleID = req.params.cid;
+
+    let cycle;
+
+    try {
+        cycle = await Cycle.findById(cycleID);
+    } catch (err) {
+        const error = new HttpError("Unable to find cycle", 500);
+        return next(error);
+    }
+
+    if (!cycle) {
+        const error = new HttpError(
+            "Could not find any cycle for the provided id.",
+            404
+        );
+        return next(error);
+    }
+
+    res.json({
+        cycle: cycle.toObject({ getters: true }),
     });
+};
+
+const getUserCycles = async (req, res, next) => {
+    const userID = req.params.uid;
+
+    let cycles;
+
+    try {
+        cycles = await Cycle.find({ user_id: userID });
+    } catch (err) {
+        const error = new HttpError(
+            "Fetching cycles failed, please try again later",
+            500
+        );
+        return next(error);
+    }
+
     if (!cycles || cycles.length === 0) {
         return next(
             new HttpError(
@@ -73,14 +116,29 @@ const getUserCycles = (req, res, next) => {
             )
         );
     }
-    res.json({ cycles });
+    res.json({
+        cycles: cycles.map(cycle => cycle.toObject({ getters: true })),
+    });
 };
 
-const getUserCurrentCycle = (req, res, next) => {
-    const userID = parseInt(req.params.uid);
-    const currentCycle = DUMMY_CYCLES.find(cycle => {
-        return cycle.user_id === userID && cycle.is_cycle_active === true;
-    });
+const getUserCurrentCycle = async (req, res, next) => {
+    const userID = req.params.uid;
+
+    let currentCycle;
+
+    try {
+        currentCycle = await Cycle.find({
+            user_id: userID,
+            is_cycle_active: true,
+        });
+    } catch (err) {
+        const error = new HttpError(
+            "Fetching cycles failed, please try again later",
+            500
+        );
+        return next(error);
+    }
+
     if (!currentCycle) {
         return next(
             new HttpError(
@@ -89,7 +147,10 @@ const getUserCurrentCycle = (req, res, next) => {
             )
         );
     }
-    res.json({ cycle: currentCycle });
+
+    res.json({
+        cycle: currentCycle.map(cycle => cycle.toObject({ getters: true })),
+    });
 };
 
 const updateCycle = (req, res, next) => {
@@ -99,7 +160,7 @@ const updateCycle = (req, res, next) => {
         throw new HttpError("Invalid inputs", 422);
     }
 
-    const cycleID = parseInt(req.params.cid);
+    const cycleID = req.params.cid;
     const { is_cycle_active, start_date, end_date, period_length } = req.body;
 
     const cycleToUpdate = {
@@ -144,7 +205,7 @@ const updateUserCurrentCycle = (req, res, next) => {
         throw new HttpError("Invalid inputs", 422);
     }
 
-    const userID = parseInt(req.params.uid);
+    const userID = req.params.uid;
     const { is_cycle_active, start_date, end_date, period_length } = req.body;
 
     const cycleToUpdate = {
@@ -183,24 +244,39 @@ const updateUserCurrentCycle = (req, res, next) => {
     res.status(200).json({ cycle: cycleToUpdate });
 };
 
-const destroyCycle = (req, res, next) => {
-    const cycleID = parseInt(req.params.cid);
+const destroyCycle = async (req, res, next) => {
+    const cycleID = req.params.cid;
 
-    if (DUMMY_CYCLES.find(cycle => cycle.id === cycleID)) {
-        throw new HttpError("Could not find a cycle with ID", 404);
+    let cycle;
+
+    try {
+        cycle = await Cycle.findById(cycleID);
+    } catch (err) {
+        const error = new HttpError("Unable to find cycle to delete", 500);
+        return next(error);
     }
-    DUMMY_CYCLES = DUMMY_CYCLES.filter(cycle => cycle.id !== cycleID);
+
+    try {
+        await cycle.remove();
+    } catch (err) {
+        const error = new HttpError(
+            "Something went wrong, unable to delete",
+            500
+        );
+        return next(error);
+    }
+
     res.status(200).json({ message: "Cycle deleted" });
 };
 
 //CRUD Exports
 exports.createCycle = createCycle;
+exports.getCycleByID = getCycleByID;
 exports.getUserCycles = getUserCycles;
 exports.getUserCurrentCycle = getUserCurrentCycle;
-// exports.updateCycle = updateCycle;
-exports.updateUserCurrentCycle = updateUserCurrentCycle;
-// exports.getUserCycleByID = getUserCycleByID;
 // exports.getUserPreviousCycle?
+// exports.updateCycle = updateCycle;
+// exports.updateUserCurrentCycle = updateUserCurrentCycle;
 // exports.updateCurrentCyclePeriodLength = updateCurrentCyclePeriodLength;
 // exports.updateCurrentCycleFromActiveToInactive = updateCycle;
 // exports.updatePreviousCycleFromInactiveToActive = updateCycle; ???
