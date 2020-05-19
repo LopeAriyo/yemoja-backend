@@ -14,7 +14,7 @@ router.post(
         check("email").normalizeEmail().isEmail(),
         check("password")
             .isLength({ min: 6 })
-            .withMessage("Password must be at least 8 chars long"),
+            .withMessage("Password must be at least 6 chars long"),
     ],
     usersController.signUp
 );
@@ -25,7 +25,7 @@ router.post(
 );
 
 //Read
-router.get("/:uid", usersController.getUser);
+router.get("/:uid", usersController.getUserByID);
 
 //Update
 router.patch(

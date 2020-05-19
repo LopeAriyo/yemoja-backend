@@ -1,14 +1,13 @@
 const uuid = require("uuid/v4");
 const { validationResult } = require("express-validator");
+
 const HttpError = require("../models/http-error");
+const User = require("../models/user");
 
 let DUMMY_USERS = [
     {
         id: 1,
-        first_name: "Lope",
-        last_name: "Ariyo",
-        email: "lariyo@fake.com",
-        password: "1234",
+
         estimated_cycle_length: 30,
         estimated_period_length: 4,
     },
@@ -23,55 +22,97 @@ let DUMMY_USERS = [
     },
 ];
 
-const signUp = (req, res, next) => {
+const signUp = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log(errors);
-        throw new HttpError("Invalid inputs", 422);
+        return next(new HttpError("Invalid inputs", 422));
     }
 
-    const { first_name, last_name, email, password } = req.body;
+    const { first_name, last_name, email, password, cycles } = req.body;
 
-    const newUser = {
-        id: uuid(),
+    let existingUser;
+    try {
+        existingUser = await User.findOne({ email: email });
+    } catch (err) {
+        const error = new HttpError("Sign up failed", 500);
+        return next(error);
+    }
+
+    if (existingUser) {
+        const error = new HttpError(
+            "User already exists, please sign in instead",
+            422
+        );
+        return next(error);
+    }
+
+    const newUser = new User({
         first_name,
         last_name,
         email,
         password,
-        estimated_cycle_length: null,
-        estimated_period_length: null,
-    };
+        estimated_cycle_length: 30,
+        estimated_period_length: 5,
+        cycles,
+    });
 
-    DUMMY_USERS.push(newUser);
+    try {
+        await newUser.save();
+    } catch (err) {
+        const error = new HttpError("Sign up failed, please try again.", 500);
+        return next(error);
+    }
 
-    res.status(201).json({ user: newUser });
+    res.status(201).json({ user: newUser.toObject({ getters: true }) });
 };
 
-const signIn = (req, res, next) => {
+const signIn = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log(errors);
-        throw new HttpError("Invalid inputs", 422);
+        return next(new HttpError("Invalid inputs", 422));
     }
+
     const { email, password } = req.body;
 
-    const validUser = DUMMY_USERS.find(user => user.email === email);
-
-    if (!validUser || validUser.password === password) {
-        throw new HttpError("E-mail Address or Password Invalid", 403);
+    let existingUser;
+    try {
+        existingUser = await User.findOne({ email: email });
+    } catch (err) {
+        const error = new HttpError("Sign in failed", 500);
+        return next(error);
     }
 
-    if (validUser.password === password) {
-        res.status(201).json({ user: validUser });
+    if (!existingUser || existingUser.password !== password) {
+        const error = new HttpError("E-mail Address or Password Invalid", 401);
+        return next(error);
     }
+
+    res.status(201).json({ message: `${existingUser.email} logged in` });
 };
 
-const getUser = (req, res, next) => {
-    const userID = parseInt(req.params.uid);
-    const user = DUMMY_USERS.find(u => {
-        return u.id === userID;
+const getUserByID = async (req, res, next) => {
+    const userID = req.params.uid;
+
+    let user;
+
+    try {
+        user = await User.findById(userID, "-password");
+    } catch (err) {
+        const error = new HttpError("Unable to find user", 500);
+        return next(error);
+    }
+
+    if (!user) {
+        const error = new HttpError(
+            "Could not find a user with the provided id.",
+            404
+        );
+        return next(error);
+    }
+
+    res.json({
+        user: user.toObject({ getters: true }),
     });
-    res.json({ user });
 };
 
 const updateUser = (req, res, next) => {
@@ -80,7 +121,7 @@ const updateUser = (req, res, next) => {
         console.log(errors);
         throw new HttpError("Invalid inputs", 422);
     }
-    const userID = parseInt(req.params.uid);
+    const userID = req.params.uid;
     const {
         first_name,
         last_name,
@@ -125,18 +166,33 @@ const updateUser = (req, res, next) => {
     res.status(200).json({ user: userToUpdate });
 };
 
-const destroyUser = (req, res, next) => {
-    const userID = parseInt(req.params.uid);
+const destroyUser = async (req, res, next) => {
+    const userID = req.params.uid;
 
-    if (DUMMY_USERS.find(user => user.id === userID)) {
-        throw new HttpError("Could not find a cycle with ID", 404);
+    let user;
+
+    try {
+        user = await User.findById(userID);
+    } catch (err) {
+        const error = new HttpError("Unable to find user to delete", 500);
+        return next(error);
     }
-    DUMMY_USERS = DUMMY_USERS.filter(user => user.id !== userID);
+
+    try {
+        await user.remove();
+    } catch (err) {
+        const error = new HttpError(
+            "Something went wrong, unable to delete",
+            500
+        );
+        return next(error);
+    }
+
     res.status(200).json({ message: "User deleted" });
 };
 
 exports.signUp = signUp;
 exports.signIn = signIn;
-exports.getUser = getUser;
+exports.getUserByID = getUserByID;
 exports.updateUser = updateUser;
 exports.destroyUser = destroyUser;
