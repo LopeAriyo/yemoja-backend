@@ -4,24 +4,6 @@ const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 
-let DUMMY_USERS = [
-    {
-        id: 1,
-
-        estimated_cycle_length: 30,
-        estimated_period_length: 4,
-    },
-    {
-        id: 2,
-        first_name: "Debbie",
-        last_name: "Ariyo",
-        email: "dariyo@fake.com",
-        password: "1234",
-        estimated_cycle_length: 28,
-        estimated_period_length: 5,
-    },
-];
-
 const signUp = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -115,56 +97,56 @@ const getUserByID = async (req, res, next) => {
     });
 };
 
-const updateUser = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        console.log(errors);
-        throw new HttpError("Invalid inputs", 422);
-    }
-    const userID = req.params.uid;
-    const {
-        first_name,
-        last_name,
-        email,
-        estimated_cycle_length,
-        estimated_period_length,
-    } = req.body;
+// const updateUser = (req, res, next) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//         console.log(errors);
+//         throw new HttpError("Invalid inputs", 422);
+//     }
+//     const userID = req.params.uid;
+//     const {
+//         first_name,
+//         last_name,
+//         email,
+//         estimated_cycle_length,
+//         estimated_period_length,
+//     } = req.body;
 
-    const userToUpdate = DUMMY_USERS.find(user => {
-        return user.id === userID;
-    });
+//     const userToUpdate = DUMMY_USERS.find(user => {
+//         return user.id === userID;
+//     });
 
-    if (!userToUpdate) {
-        return next(
-            new HttpError("Could not update user with provided id.", 404)
-        );
-    }
+//     if (!userToUpdate) {
+//         return next(
+//             new HttpError("Could not update user with provided id.", 404)
+//         );
+//     }
 
-    const userIndex = DUMMY_USERS.findIndex(user => user.id === userID);
+//     const userIndex = DUMMY_USERS.findIndex(user => user.id === userID);
 
-    if (first_name) {
-        userToUpdate.first_name = first_name;
-    }
-    if (last_name) {
-        userToUpdate.last_name = last_name;
-    }
+//     if (first_name) {
+//         userToUpdate.first_name = first_name;
+//     }
+//     if (last_name) {
+//         userToUpdate.last_name = last_name;
+//     }
 
-    if (email) {
-        userToUpdate.email = email;
-    }
+//     if (email) {
+//         userToUpdate.email = email;
+//     }
 
-    if (estimated_cycle_length) {
-        userToUpdate.estimated_cycle_length = estimated_cycle_length;
-    }
+//     if (estimated_cycle_length) {
+//         userToUpdate.estimated_cycle_length = estimated_cycle_length;
+//     }
 
-    if (estimated_period_length) {
-        userToUpdate.estimated_period_length = estimated_period_length;
-    }
+//     if (estimated_period_length) {
+//         userToUpdate.estimated_period_length = estimated_period_length;
+//     }
 
-    DUMMY_USERS[userIndex] = userToUpdate;
+//     DUMMY_USERS[userIndex] = userToUpdate;
 
-    res.status(200).json({ user: userToUpdate });
-};
+//     res.status(200).json({ user: userToUpdate });
+// };
 
 const destroyUser = async (req, res, next) => {
     const userID = req.params.uid;
@@ -194,5 +176,5 @@ const destroyUser = async (req, res, next) => {
 exports.signUp = signUp;
 exports.signIn = signIn;
 exports.getUserByID = getUserByID;
-exports.updateUser = updateUser;
+// exports.updateUser = updateUser;
 exports.destroyUser = destroyUser;
