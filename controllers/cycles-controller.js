@@ -276,14 +276,27 @@ const destroyCycle = async (req, res, next) => {
     let cycle;
 
     try {
-        cycle = await Cycle.findById(cycleID);
+        cycle = await Cycle.findById(cycleID).populate("user_id");
     } catch (err) {
         const error = new HttpError("Unable to find cycle to delete", 500);
         return next(error);
     }
 
+    if (!cycle) {
+        const error = new HttpError(
+            "Unable to find cycle with provided id",
+            500
+        );
+        return next(error);
+    }
+
     try {
-        await cycle.remove();
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+        await cycle.remove({ session: sess });
+        cycle.user_id.cycles.pull(cycle);
+        await cycle.user_id.save({ session: sess });
+        await sess.commitTransaction();
     } catch (err) {
         const error = new HttpError(
             "Something went wrong, unable to delete",
