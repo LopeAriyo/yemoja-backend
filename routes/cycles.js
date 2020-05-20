@@ -8,12 +8,7 @@ const router = express.Router();
 //Create
 router.post(
     "/",
-    [
-        check("is_cycle_active").isBoolean(),
-        check("start_date").not().isEmpty(),
-        // check("cycle_length").isNumeric(),
-        // check("period_length").isNumeric(),
-    ],
+    [check("is_cycle_active").isBoolean(), check("start_date").not().isEmpty()],
     cyclesController.createCycle
 );
 

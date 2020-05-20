@@ -28,14 +28,14 @@ router.post(
 router.get("/:uid", usersController.getUserByID);
 
 //Update
-router.patch(
-    "/:uid",
-    [
-        check("estimated_cycle_length").isNumeric(),
-        check("estimated_period_length").isNumeric(),
-    ],
-    usersController.updateUser
-);
+// router.patch(
+//     "/:uid",
+//     [
+//         check("estimated_cycle_length").isNumeric(),
+//         check("estimated_period_length").isNumeric(),
+//     ],
+//     usersController.updateUser
+// );
 
 //This route needs to change to update cycle details as you have to change everything at the same time.
 // Add a update details (name and last name only) patch route
