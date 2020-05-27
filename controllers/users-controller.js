@@ -68,7 +68,9 @@ const signIn = async (req, res, next) => {
         return next(error);
     }
 
-    res.status(201).json({ message: `${existingUser.email} logged in` });
+    res.status(201).json({ user: existingUser.toObject({ getters: true }) });
+
+    // res.status(201).json({ message: `${existingUser.email} now signed in` });
 };
 
 const getUserByID = async (req, res, next) => {
