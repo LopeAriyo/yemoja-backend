@@ -3,16 +3,17 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const Schema = mongoose.Schema;
 
-const userSchema = new Schema({
+const UserSchema = new Schema({
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, minLength: 6 },
-    estimated_cycle_length: { type: Number, required: true },
-    estimated_period_length: { type: Number, required: true },
-    cycles: [{ type: mongoose.Types.ObjectId, required: true, ref: "Cycle" }],
+    avatar: { type: String },
+    estimated_cycle_length: { type: Number },
+    estimated_period_length: { type: Number },
+    cycles: [{ type: mongoose.Types.ObjectId, ref: "Cycle" }],
 });
 
-userSchema.plugin(uniqueValidator);
+UserSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("User", UserSchema);
