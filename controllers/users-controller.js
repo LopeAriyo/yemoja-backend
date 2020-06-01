@@ -1,7 +1,12 @@
 const { validationResult } = require("express-validator");
+const gravatar = require("gravatar");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const normalize = require("normalize-url");
 
+const config = require("config");
 const HttpError = require("../models/http-error");
-const User = require("../models/user");
+const User = require("../models/User");
 
 const signUp = async (req, res, next) => {
     const errors = validationResult(req);
@@ -13,7 +18,7 @@ const signUp = async (req, res, next) => {
 
     let existingUser;
     try {
-        existingUser = await User.findOne({ email: email });
+        existingUser = await User.findOne({ email });
     } catch (err) {
         const error = new HttpError("Sign up failed", 500);
         return next(error);
@@ -27,11 +32,35 @@ const signUp = async (req, res, next) => {
         return next(error);
     }
 
+    const avatar = normalize(
+        gravatar.url(email, {
+            s: "200",
+            r: "pg",
+            d: "mm",
+        }),
+        { forceHttps: true }
+    );
+
+    let salt;
+    let hashedPassword;
+
+    try {
+        salt = await bcrypt.genSalt(12);
+        hashedPassword = await bcrypt.hash(password, salt);
+    } catch (err) {
+        const error = new HttpError(
+            "Creating password failed, please try again.",
+            500
+        );
+        return next(error);
+    }
+
     const newUser = new User({
         first_name,
         last_name,
         email,
-        password,
+        password: hashedPassword,
+        avatar,
         estimated_cycle_length: 30,
         estimated_period_length: 5,
         cycles: [],
@@ -44,7 +73,29 @@ const signUp = async (req, res, next) => {
         return next(error);
     }
 
-    res.status(201).json({ user: newUser.toObject({ getters: true }) });
+    const payload = {
+        user: {
+            id: newUser.id,
+        },
+    };
+
+    let token;
+    try {
+        token = jwt.sign(payload, config.get("jwtSecret"), {
+            expiresIn: "4 days",
+        });
+    } catch (err) {
+        const error = new HttpError(
+            "Signing up failed, please try again later.",
+            500
+        );
+        return next(error);
+    }
+
+    res.status(201).json({
+        user: newUser.toObject({ getters: true }).id,
+        token: token,
+    });
 };
 
 const signIn = async (req, res, next) => {
