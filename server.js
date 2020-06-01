@@ -1,17 +1,20 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
+const connectDB = require("./config/db");
+const path = require("path");
+
+//Routes
+const authRoutes = require("./routes/auth");
+const usersRoutes = require("./routes/users");
+const cyclesRoutes = require("./routes/cycles");
 
 //Models
 const HttpError = require("./models/http-error");
 
-//Routes
-const usersRoutes = require("./routes/users");
-const cyclesRoutes = require("./routes/cycles");
-
 const app = express();
 
-app.use(bodyParser.json());
+connectDB();
+
+app.use(express.json());
 
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -23,6 +26,7 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/cycles", cyclesRoutes);
 
@@ -39,13 +43,15 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message || "An unknown error occurred!" });
 });
 
-mongoose
-    .connect(
-        "mongodb+srv://lope:1nPTxhYjPPgJVZep@cluster0-s7rff.mongodb.net/mern?retryWrites=true&w=majority"
-    )
-    .then(() => {
-        app.listen(5000);
-    })
-    .catch(err => {
-        console.log(err);
+if (process.env.NODE_ENV === "production") {
+    // Set static folder
+    app.use(express.static("client/build"));
+
+    app.get("*", (req, res) => {
+        res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
     });
+}
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
