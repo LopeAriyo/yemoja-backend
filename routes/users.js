@@ -5,19 +5,27 @@ const usersController = require("../controllers/users-controller");
 
 const router = express.Router();
 
-//Create
+//Create User - access is public
 router.post(
     "/signup",
     [
-        check("first_name").isAlpha().isLength({ min: 2 }),
-        check("last_name").isAlpha().isLength({ min: 2 }),
-        check("email").normalizeEmail().isEmail(),
-        check("password")
-            .isLength({ min: 6 })
-            .withMessage("Password must be at least 6 chars long"),
+        check("first_name", "First name is required")
+            .isAlpha()
+            .isLength({ min: 2 }),
+        check("last_name", "Last name is required")
+            .isAlpha()
+            .isLength({ min: 2 }),
+        check("email", "Please include a valid email address")
+            .normalizeEmail()
+            .isEmail(),
+        check(
+            "password",
+            "Password must be at least 6 characters long"
+        ).isLength({ min: 6 }),
     ],
     usersController.signUp
 );
+
 router.post(
     "/signin",
     [check("email").not().isEmpty(), check("password").not().isEmpty()],
@@ -25,6 +33,7 @@ router.post(
 );
 
 //Read
+//
 router.get("/:uid", usersController.getUserByID);
 
 //Update
