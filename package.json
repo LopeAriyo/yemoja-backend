@@ -4,8 +4,8 @@
     "description": "Period Tracking App",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "nodemon app.js"
+        "start": "node server.js",
+        "server": "nodemon server.js"
     },
     "author": "",
     "license": "ISC",
