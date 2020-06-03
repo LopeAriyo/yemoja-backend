@@ -147,7 +147,7 @@ const signIn = async (req, res, next) => {
 };
 
 const getUserByID = async (req, res, next) => {
-    const userID = req.params.uid;
+    const userID = req.user.id;
 
     let user;
 
