@@ -1,10 +1,11 @@
 const express = require("express");
-const auth = require("../middleware/auth");
+const { check } = require("express-validator");
 
 const router = express.Router();
-
+const auth = require("../middleware/auth");
 const HttpError = require("../models/http-error");
 const User = require("../models/User");
+const usersController = require("../controllers/users-controller");
 
 //
 router.get("/", auth, async (req, res, next) => {
@@ -21,5 +22,12 @@ router.get("/", auth, async (req, res, next) => {
         user: user.toObject({ getters: true }),
     });
 });
+
+//authenticate user and get token
+router.post(
+    "/signin",
+    [check("email").not().isEmpty(), check("password").not().isEmpty()],
+    usersController.signIn
+);
 
 module.exports = router;

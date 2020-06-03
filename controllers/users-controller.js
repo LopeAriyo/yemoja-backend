@@ -82,11 +82,11 @@ const signUp = async (req, res, next) => {
     let token;
     try {
         token = jwt.sign(payload, config.get("jwtSecret"), {
-            expiresIn: "4 days",
+            expiresIn: "5 days",
         });
     } catch (err) {
         const error = new HttpError(
-            "Signing up failed, please try again later.",
+            "Sign up failed due to server error, please try again later.",
             500
         );
         return next(error);
@@ -107,21 +107,43 @@ const signIn = async (req, res, next) => {
     const { email, password } = req.body;
 
     let existingUser;
+    let isMatch;
     try {
         existingUser = await User.findOne({ email: email });
+        isMatch = await bcrypt.compare(password, existingUser.password);
     } catch (err) {
         const error = new HttpError("Sign in failed", 500);
         return next(error);
     }
 
-    if (!existingUser || existingUser.password !== password) {
+    if (!existingUser || !isMatch) {
         const error = new HttpError("E-mail Address or Password Invalid", 401);
         return next(error);
     }
 
-    res.status(201).json({ user: existingUser.toObject({ getters: true }) });
+    const payload = {
+        user: {
+            id: existingUser.id,
+        },
+    };
 
-    // res.status(201).json({ message: `${existingUser.email} now signed in` });
+    let token;
+    try {
+        token = jwt.sign(payload, config.get("jwtSecret"), {
+            expiresIn: "5 days",
+        });
+    } catch (err) {
+        const error = new HttpError(
+            "Sign in failed due to server error, please try again later.",
+            500
+        );
+        return next(error);
+    }
+
+    res.status(201).json({
+        user: existingUser.toObject({ getters: true }).id,
+        token: token,
+    });
 };
 
 const getUserByID = async (req, res, next) => {

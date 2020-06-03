@@ -26,12 +26,6 @@ router.post(
     usersController.signUp
 );
 
-router.post(
-    "/signin",
-    [check("email").not().isEmpty(), check("password").not().isEmpty()],
-    usersController.signIn
-);
-
 //Read
 //
 router.get("/:uid", usersController.getUserByID);
