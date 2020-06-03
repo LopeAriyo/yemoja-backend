@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 const HttpError = require("../models/http-error");
 const Cycle = require("../models/cycle");
-const User = require("../models/user");
+const User = require("../models/User");
 
 const createCycle = async (req, res, next) => {
     const errors = validationResult(req);
