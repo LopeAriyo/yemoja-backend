@@ -27,7 +27,6 @@ router.post(
 );
 
 //Read
-//
 router.get("/:uid", usersController.getUserByID);
 
 //Update

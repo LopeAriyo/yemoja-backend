@@ -147,6 +147,31 @@ const signIn = async (req, res, next) => {
 };
 
 const getUserByID = async (req, res, next) => {
+    const userID = req.params.uid;
+
+    let user;
+
+    try {
+        user = await User.findById(userID, "-password");
+    } catch (err) {
+        const error = new HttpError("Unable to find user", 500);
+        return next(error);
+    }
+
+    if (!user) {
+        const error = new HttpError(
+            "Could not find a user with the provided id.",
+            404
+        );
+        return next(error);
+    }
+
+    res.json({
+        user: user.toObject({ getters: true }),
+    });
+};
+
+const getUserByToken = async (req, res, next) => {
     const userID = req.user.id;
 
     let user;
@@ -250,5 +275,6 @@ const destroyUser = async (req, res, next) => {
 exports.signUp = signUp;
 exports.signIn = signIn;
 exports.getUserByID = getUserByID;
+exports.getUserByToken = getUserByToken;
 // exports.updateUser = updateUser;
 exports.destroyUser = destroyUser;
